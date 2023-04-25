@@ -77,9 +77,13 @@ export abstract class IQuery {
 
     abstract getExport(id: string): Export | Promise<Export>;
 
+    abstract getExportsByDate(startDate: string, endDate: string): Export[] | Promise<Export[]>;
+
     abstract getImports(): Import[] | Promise<Import[]>;
 
     abstract getImport(id: string): Import | Promise<Import>;
+
+    abstract getImportsByDate(startDate: string, endDate: string): Import[] | Promise<Import[]>;
 
     abstract findAllProducts(): Nullable<Product>[] | Promise<Nullable<Product>[]>;
 
@@ -92,6 +96,8 @@ export abstract class IQuery {
     abstract getWarehouseStockCurrentCapacity(id: string): Nullable<number> | Promise<Nullable<number>>;
 
     abstract getAllWarehousesCurrentCapacity(): Nullable<number> | Promise<Nullable<number>>;
+
+    abstract createHello(): Nullable<string> | Promise<Nullable<string>>;
 }
 
 export abstract class IMutation {

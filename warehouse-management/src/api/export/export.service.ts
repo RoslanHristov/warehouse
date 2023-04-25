@@ -8,7 +8,7 @@ import { ExportEntity } from 'src/libs/entities/export.entity';
 import { ProductEntity } from 'src/libs/entities/product.entity';
 import { WarehouseEntity } from 'src/libs/entities/warehouse.entity';
 import { CreateExportInput } from 'src/types/graphql';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { ProductService } from '../product/product.service';
 import { WarehouseService } from '../warehouse/warehouse.service';
 
@@ -119,5 +119,21 @@ export class ExportService {
       throw new NotFoundException(`Export with id - "${id}" not found`);
     }
     return exportFound;
+  }
+
+  public async getExportsByDate(startDate: string, endDate: string) {
+    const allExports = await this.exportRepository
+      .createQueryBuilder('export')
+      .where('export.exportDate BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .getMany();
+
+    if (allExports.length === 0) {
+      throw new NotFoundException('No exports found for this date range');
+    }
+
+    return allExports;
   }
 }

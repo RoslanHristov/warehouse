@@ -130,4 +130,20 @@ export class ImportService {
 
     return importToDelete;
   }
+
+  public async getImportsByDate(startDate: string, endDate: string) {
+    const allImports = await this.importRepository
+      .createQueryBuilder('import')
+      .where('import.importDate BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .getMany();
+
+    if (allImports.length === 0) {
+      throw new NotFoundException('No imports found for this date range');
+    }
+
+    return allImports;
+  }
 }

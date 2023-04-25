@@ -35,4 +35,12 @@ export class ImportResolver {
   public async getImport(@Args('id') id: string) {
     return this.importService.getImport(id);
   }
+
+  @Query()
+  public async getImportsByDate(
+    @Args('startDate') startDate: string,
+    @Args('endDate') endDate: string,
+  ) {
+    return this.importService.getImportsByDate(startDate, endDate);
+  }
 }

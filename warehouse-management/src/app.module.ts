@@ -10,6 +10,8 @@ import { DatabaseModule } from './libs/database.module';
 import { WarehouseModule } from './api/warehouse/warehouse.module';
 import { ProductModule } from './api/product/product.module';
 import { ImportModule } from './api/import/import.module';
+import { HelloModule } from './calculations-rest-api/hello.module';
+
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -22,12 +24,12 @@ import { ImportModule } from './api/import/import.module';
         outputAs: 'class',
       },
     }),
-
     WarehouseModule,
     ProductModule,
     ImportModule,
     ExportModule,
     DatabaseModule,
+    HelloModule,
   ],
   controllers: [AppController],
   providers: [AppService],

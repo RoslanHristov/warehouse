@@ -36,4 +36,12 @@ export class ExportResolver {
   public async getExport(@Args('id') id: string) {
     return this.exportService.getExport(id);
   }
+
+  @Query()
+  public async getExportsByDate(
+    @Args('startDate') startDate: string,
+    @Args('endDate') endDate: string,
+  ) {
+    return this.exportService.getExportsByDate(startDate, endDate);
+  }
 }
