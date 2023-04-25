@@ -1,0 +1,40 @@
+type Warehouse {
+  id: ID!
+  name: String!
+  stockMaxCapacity: Int!
+  stockCurrentCapacity: Int
+  hazardous: Boolean!
+  products: [Product]!
+  # imports: [Import]
+  exports: [Export]
+  createdAt: String!
+}
+
+input CreateWarehouseInput {
+  name: String!
+  stockMaxCapacity: Int!
+  hazardous: Boolean!
+}
+
+input UpdateWarehouseInput {
+  id: String!
+  name: String
+  stockMaxCapacity: Int
+  hazardous: Boolean
+}
+
+type Query {
+  findAllWarehouses: [Warehouse]!
+  findWarehouseById(id: String!): Warehouse
+  getWarehouseStockCurrentCapacity(id: String!): Int
+  getAllWarehousesCurrentCapacity: Int
+}
+
+type Mutation {
+  createWarehouse(CreateWarehouseInput: CreateWarehouseInput!): Warehouse!
+  updateWarehouse(
+    id: String!
+    UpdateWarehouseInput: UpdateWarehouseInput!
+  ): Warehouse!
+  deleteWarehouse(id: String!): String
+}
