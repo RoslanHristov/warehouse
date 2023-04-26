@@ -31,5 +31,6 @@ input UpdateExportInput {
 type Mutation {
   createExport(CreateExportInput: CreateExportInput!): Export!
   updateExport(id: ID!, UpdateExportInput: UpdateExportInput!): Export!
+  executeExport(id: ID!): String!
   deleteExport(id: ID!): Boolean!
 }

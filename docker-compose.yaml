@@ -1,0 +1,47 @@
+version: '3'
+services:
+
+  pg:
+    container_name: pg
+    env_file:
+      - ./warehouse-management/.env.compose
+    # environment:
+    # - POSTGRES_PORT=${POSTGRES_PORT}
+    # - POSTGRES_HOST=${POSTGRES_HOST}
+    # - POSTGRES_USER=${POSTGRES_USER}
+    # - POSTGRES_DB=${POSTGRES_DB}
+    # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    image: postgres:10
+    build: ./db
+    ports:
+      - "5432:5432"
+    volumes:
+      - /docker-entrypoint-initdb.d
+  graph-api:
+    container_name: graph-api
+    restart: always
+    build:
+      context: ./warehouse-management
+      dockerfile: Dockerfile
+    env_file:
+      - ./warehouse-management/.env.compose
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+    links:
+      - pg
+    command: "npm run start:dev"
+    depends_on:
+      - pg
+  rest-api:
+    container_name: rest-api
+    restart: always
+    build:
+      context: ./warehouse-rest
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+    command: "npm run start:dev"

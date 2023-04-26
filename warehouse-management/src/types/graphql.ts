@@ -97,7 +97,7 @@ export abstract class IQuery {
 
     abstract getAllWarehousesCurrentCapacity(): Nullable<number> | Promise<Nullable<number>>;
 
-    abstract createHello(): Nullable<string> | Promise<Nullable<string>>;
+    abstract getCalc(): Nullable<string> | Promise<Nullable<string>>;
 }
 
 export abstract class IMutation {
@@ -105,11 +105,15 @@ export abstract class IMutation {
 
     abstract updateExport(id: string, UpdateExportInput: UpdateExportInput): Export | Promise<Export>;
 
+    abstract executeExport(id: string): string | Promise<string>;
+
     abstract deleteExport(id: string): boolean | Promise<boolean>;
 
     abstract createImport(CreateImportInput: CreateImportInput): Import | Promise<Import>;
 
     abstract updateImport(id: string, UpdateImportInput: UpdateImportInput): Import | Promise<Import>;
+
+    abstract executeImport(id: string): string | Promise<string>;
 
     abstract deleteImport(id: string): boolean | Promise<boolean>;
 

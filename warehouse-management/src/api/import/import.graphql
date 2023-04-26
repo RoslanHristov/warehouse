@@ -31,5 +31,6 @@ input UpdateImportInput {
 type Mutation {
   createImport(CreateImportInput: CreateImportInput!): Import!
   updateImport(id: ID!, UpdateImportInput: UpdateImportInput!): Import!
+  executeImport(id: ID!): String!
   deleteImport(id: ID!): Boolean!
 }

@@ -25,7 +25,9 @@ export class ExportService {
     private readonly productService: ProductService,
   ) {}
 
-  public async createExport(createExportInput: CreateExportInput) {
+  public async createExport(
+    createExportInput: CreateExportInput,
+  ): Promise<ExportEntity> {
     const { productId, exportToWarehouseId } = createExportInput;
 
     // Check if product exists
@@ -71,16 +73,19 @@ export class ExportService {
     return newExport;
   }
 
-  public async findExportById(id: string) {
-    const exportFound = await this.getExport(id);
+  public async findExportById(id: string): Promise<ExportEntity> {
+    const exportFound: ExportEntity = await this.getExport(id);
     if (!exportFound) {
       throw new NotFoundException(`Export with id - "${id}" not found`);
     }
     return exportFound;
   }
 
-  public async updateExport(id: string, updateExportInput: CreateExportInput) {
-    const exportToUpdate = await this.getExport(id);
+  public async updateExport(
+    id: string,
+    updateExportInput: CreateExportInput,
+  ): Promise<ExportEntity> {
+    const exportToUpdate: ExportEntity = await this.getExport(id);
 
     if (!exportToUpdate) {
       throw new NotFoundException(`Export with id - "${id}" not found`);
@@ -94,35 +99,40 @@ export class ExportService {
     return updatedWarehouse;
   }
 
-  public async deleteExport(id: string) {
-    const exportToDelete = await this.getExport(id);
+  public async deleteExport(id: string): Promise<string> {
+    const exportToDelete: ExportEntity = await this.getExport(id);
 
     if (!exportToDelete) {
       throw new NotFoundException(`Export with id - "${id}" not found`);
     }
 
     await this.exportRepository.delete(id);
-    return exportToDelete;
+    return 'Export deleted successfully';
   }
 
-  public async getExports() {
-    const allExports = await this.exportRepository.find();
+  public async getExports(): Promise<ExportEntity[]> {
+    const allExports: ExportEntity[] = await this.exportRepository.find();
     if (allExports.length === 0) {
       throw new NotFoundException('No exports found');
     }
     return allExports;
   }
 
-  public async getExport(id: string) {
-    const exportFound = await this.exportRepository.findOneBy({ id });
+  public async getExport(id: string): Promise<ExportEntity> {
+    const exportFound: ExportEntity = await this.exportRepository.findOneBy({
+      id,
+    });
     if (!exportFound) {
       throw new NotFoundException(`Export with id - "${id}" not found`);
     }
     return exportFound;
   }
 
-  public async getExportsByDate(startDate: string, endDate: string) {
-    const allExports = await this.exportRepository
+  public async getExportsByDate(
+    startDate: string,
+    endDate: string,
+  ): Promise<ExportEntity[]> {
+    const allExports: ExportEntity[] = await this.exportRepository
       .createQueryBuilder('export')
       .where('export.exportDate BETWEEN :startDate AND :endDate', {
         startDate,
@@ -135,5 +145,72 @@ export class ExportService {
     }
 
     return allExports;
+  }
+
+  public async executeExport(id: string): Promise<string> {
+    const exportToExecute: ExportEntity = await this.getExport(id);
+
+    if (!exportToExecute) {
+      throw new NotFoundException(`Export with id - "${id}" not found`);
+    }
+
+    const productToExport: ProductEntity =
+      await this.productRepository.findOneBy({
+        id: exportToExecute.productId,
+      });
+
+    const exportFromWarehouse: WarehouseEntity =
+      await this.warehouseRepository.findOneBy({
+        id: productToExport.warehouseId,
+      });
+
+    const exportToWarehouse: WarehouseEntity =
+      await this.warehouseRepository.findOneBy({
+        id: exportToExecute.exportToWarehouseId,
+      });
+
+    if (exportFromWarehouse.id === exportToWarehouse.id) {
+      throw new ConflictException(
+        `Export from same warehouse "${exportFromWarehouse.name}" to warehouse "${exportToWarehouse.name}" is not allowed`,
+      );
+    }
+
+    // Check if exportToWarehouse has enough space
+    if (
+      exportToWarehouse.stockCurrentCapacity + productToExport.productSize >
+      exportToWarehouse.stockMaxCapacity
+    ) {
+      throw new ConflictException(
+        `Warehouse "${exportToWarehouse.name}" does not have enough space for this product`,
+      );
+    }
+
+    // Check if exported product is hazordous and warehouse will accept it
+    if (productToExport.isHazardous !== exportToWarehouse.hazardous) {
+      throw new ConflictException(
+        `Export to warehouse "${exportToWarehouse.name}" accepts only ${
+          exportToWarehouse.hazardous ? 'hazardous' : 'non-hazardous'
+        } products`,
+      );
+    }
+
+    // Update product warehouse
+    productToExport.warehouseId = exportToWarehouse.id;
+    await this.productRepository.save(productToExport);
+
+    // Update exportFromWarehouse capacity
+    exportFromWarehouse.stockCurrentCapacity -= productToExport.productSize;
+    await this.warehouseRepository.save(exportFromWarehouse);
+
+    // Update exportToWarehouse capacity
+    exportToWarehouse.stockCurrentCapacity += productToExport.productSize;
+    await this.warehouseRepository.save(exportToWarehouse);
+
+    // Update export status
+    // TODO add "status" field to entity
+    // exportToExecute.status = 'executed';
+    await this.exportRepository.save(exportToExecute);
+
+    return 'Export executed successfully';
   }
 }

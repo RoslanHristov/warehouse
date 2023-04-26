@@ -18,9 +18,11 @@ export class WarehouseService {
     private readonly productRepository: Repository<ProductEntity>,
   ) {}
 
-  async createWarehouse(createWarehouseInput: CreateWarehouseInput) {
+  async createWarehouse(
+    createWarehouseInput: CreateWarehouseInput,
+  ): Promise<WarehouseEntity> {
     try {
-      const newWarehouse =
+      const newWarehouse: WarehouseEntity =
         this.warehouseRepository.create(createWarehouseInput);
       newWarehouse.stockCurrentCapacity = 0;
       await this.warehouseRepository.save(newWarehouse);
@@ -36,16 +38,19 @@ export class WarehouseService {
     }
   }
 
-  async findAllWarehouses() {
-    const allWarehouses = await this.warehouseRepository.find();
+  async findAllWarehouses(): Promise<WarehouseEntity[]> {
+    const allWarehouses: WarehouseEntity[] =
+      await this.warehouseRepository.find();
     if (allWarehouses.length === 0) {
       throw new BadRequestException('No warehouses found');
     }
     return allWarehouses;
   }
 
-  async findWarehouseById(id: string) {
-    const warehouse = await this.warehouseRepository.findOneBy({ id });
+  async findWarehouseById(id: string): Promise<WarehouseEntity> {
+    const warehouse: WarehouseEntity = await this.warehouseRepository.findOneBy(
+      { id },
+    );
     if (!warehouse) {
       throw new BadRequestException(
         'Cannot find warehouse with the provided id',
@@ -57,8 +62,8 @@ export class WarehouseService {
   async updateWarehouse(
     id: string,
     updateWarehouseInput: UpdateWarehouseInput,
-  ) {
-    const warehouse = await this.findWarehouseById(id);
+  ): Promise<WarehouseEntity> {
+    const warehouse: WarehouseEntity = await this.findWarehouseById(id);
 
     Object.assign(warehouse, updateWarehouseInput); // Update the entity properties
     const updatedWarehouse = await this.warehouseRepository.save(warehouse); // Save the updated entity
@@ -66,7 +71,7 @@ export class WarehouseService {
     return updatedWarehouse;
   }
 
-  async deleteWarehouse(id: string) {
+  async deleteWarehouse(id: string): Promise<string> {
     const warehouse = await this.warehouseRepository.findOneBy({ id });
 
     if (!warehouse) {
@@ -93,7 +98,8 @@ export class WarehouseService {
   }
 
   async getAllWarehousesCurrentCapacity(): Promise<number> {
-    const allWarehouses = await this.warehouseRepository.find();
+    const allWarehouses: WarehouseEntity[] =
+      await this.warehouseRepository.find();
 
     if (allWarehouses.length === 0) {
       throw new BadRequestException('No warehouses found');
@@ -107,7 +113,7 @@ export class WarehouseService {
     return totalStockCurrentCapacity;
   }
 
-  async freeUpWarehouseSpace(warehouseId) {
+  async freeUpWarehouseSpace(warehouseId): Promise<string> {
     const warehouse: WarehouseEntity = await this.findWarehouseById(
       warehouseId,
     );
@@ -126,5 +132,7 @@ export class WarehouseService {
 
     warehouse.stockCurrentCapacity = 0;
     await this.warehouseRepository.save(warehouse);
+
+    return `Successfully freed up space in warehouse "${warehouse.name}"`;
   }
 }

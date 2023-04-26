@@ -26,7 +26,9 @@ export class ImportService {
     private readonly productService: ProductService,
   ) {}
 
-  public async createImport(createImportInput: CreateImportInput) {
+  public async createImport(
+    createImportInput: CreateImportInput,
+  ): Promise<ImportEntity> {
     const { productId, importToWarehouseId } = createImportInput;
 
     // Check if product exists
@@ -85,7 +87,10 @@ export class ImportService {
     return newImport;
   }
 
-  public async updateImport(id: string, updateImportInput: UpdateImportInput) {
+  public async updateImport(
+    id: string,
+    updateImportInput: UpdateImportInput,
+  ): Promise<ImportEntity> {
     const importToUpdate = await this.getImport(id);
 
     if (!importToUpdate) {
@@ -110,7 +115,7 @@ export class ImportService {
     return importToFind;
   }
 
-  public async getImports() {
+  public async getImports(): Promise<ImportEntity[]> {
     const imports = await this.importRepository.find();
     if (imports.length === 0) {
       throw new NotFoundException(`No imports found`);
@@ -119,8 +124,8 @@ export class ImportService {
     return imports;
   }
 
-  public async deleteImport(id: string) {
-    const importToDelete = await this.getImport(id);
+  public async deleteImport(id: string): Promise<string> {
+    const importToDelete: ImportEntity = await this.getImport(id);
 
     if (!importToDelete) {
       throw new NotFoundException(`Import with id - "${id}" not found`);
@@ -128,10 +133,13 @@ export class ImportService {
 
     await this.importRepository.remove(importToDelete);
 
-    return importToDelete;
+    return 'Import deleted successfully';
   }
 
-  public async getImportsByDate(startDate: string, endDate: string) {
+  public async getImportsByDate(
+    startDate: string,
+    endDate: string,
+  ): Promise<ImportEntity[]> {
     const allImports = await this.importRepository
       .createQueryBuilder('import')
       .where('import.importDate BETWEEN :startDate AND :endDate', {
@@ -145,5 +153,72 @@ export class ImportService {
     }
 
     return allImports;
+  }
+
+  public async executeImport(id: string): Promise<string> {
+    const importToExecute = await this.getImport(id);
+
+    if (!importToExecute) {
+      throw new NotFoundException(`Import with id - "${id}" not found`);
+    }
+
+    const { productId, importToWarehouseId } = importToExecute;
+
+    // Check if product exists
+    const product: ProductEntity = await this.productService.findProductById(
+      productId,
+    );
+
+    // Check if product warehouse exists
+    const importFromWarehouse: WarehouseEntity =
+      await this.warehouseService.findWarehouseById(product.warehouseId);
+
+    // Check if warehouse that we're importing to exists
+    const importToWarehouse: WarehouseEntity =
+      await this.warehouseService.findWarehouseById(importToWarehouseId);
+
+    if (product.warehouseId === importToWarehouseId) {
+      throw new ConflictException(
+        `Import from same warehouse "${importFromWarehouse.name}" to warehouse "${importToWarehouse.name}" is not allowed`,
+      );
+    }
+
+    // Check if imported product is hazordous and warehouse will accept it
+    if (product.isHazardous !== importToWarehouse.hazardous) {
+      throw new ConflictException(
+        `Import to warehouse "${importToWarehouse.name}" accepts only ${
+          importToWarehouse.hazardous ? 'hazardous' : 'non-hazardous'
+        } products`,
+      );
+    }
+
+    // Check if importToWarehouse has enough space
+    if (
+      importToWarehouse.stockCurrentCapacity + product.productSize >
+      importToWarehouse.stockMaxCapacity
+    ) {
+      throw new ConflictException(
+        `Warehouse "${importToWarehouse.name}" does not have enough space for this product`,
+      );
+    }
+
+    // Update product warehouseId
+    product.warehouseId = importToWarehouseId;
+    await this.productRepository.save(product);
+
+    // Update importToWarehouse stockCurrentCapacity
+    importToWarehouse.stockCurrentCapacity += product.productSize;
+    await this.warehouseRepository.save(importToWarehouse);
+
+    // Update importFromWarehouse stockCurrentCapacity
+    importFromWarehouse.stockCurrentCapacity -= product.productSize;
+    await this.warehouseRepository.save(importFromWarehouse);
+
+    // Update import status
+    // TODO: add "status" to entity
+    // importToExecute.status = 'executed';
+    await this.importRepository.save(importToExecute);
+
+    return 'Import executed successfully';
   }
 }

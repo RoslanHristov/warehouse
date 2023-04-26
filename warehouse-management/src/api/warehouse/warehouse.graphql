@@ -36,5 +36,6 @@ type Mutation {
     id: String!
     UpdateWarehouseInput: UpdateWarehouseInput!
   ): Warehouse!
-  deleteWarehouse(id: String!): String
+  deleteWarehouse(id: String!): String!
+  freeUpWarehouseSpace(id: String!): String!
 }

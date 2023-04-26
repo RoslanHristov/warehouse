@@ -10,7 +10,7 @@ import { DatabaseModule } from './libs/database.module';
 import { WarehouseModule } from './api/warehouse/warehouse.module';
 import { ProductModule } from './api/product/product.module';
 import { ImportModule } from './api/import/import.module';
-import { HelloModule } from './calculations-rest-api/hello.module';
+import { CalcModule } from './calculations-rest-api/calc.module';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { HelloModule } from './calculations-rest-api/hello.module';
     ImportModule,
     ExportModule,
     DatabaseModule,
-    HelloModule,
+    CalcModule,
   ],
   controllers: [AppController],
   providers: [AppService],

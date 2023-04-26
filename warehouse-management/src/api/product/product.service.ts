@@ -16,13 +16,14 @@ export class ProductService {
     private readonly warehouseService: WarehouseService,
   ) {}
 
-  public async createProduct(createProductInput: CreateProductInput) {
+  public async createProduct(
+    createProductInput: CreateProductInput,
+  ): Promise<ProductEntity> {
     try {
       const { warehouseId, isHazardous, productSize } = createProductInput;
 
-      const warehouse = await this.warehouseService.findWarehouseById(
-        warehouseId,
-      );
+      const warehouse: WarehouseEntity =
+        await this.warehouseService.findWarehouseById(warehouseId);
 
       if (warehouse.hazardous !== isHazardous) {
         throw new ConflictException(
@@ -39,7 +40,8 @@ export class ProductService {
         );
       }
 
-      const newProduct = this.productRepository.create(createProductInput);
+      const newProduct: ProductEntity =
+        this.productRepository.create(createProductInput);
       await this.productRepository.save(newProduct);
 
       // Update warehouse stock capacity
@@ -66,10 +68,8 @@ export class ProductService {
    * Handles moving the product to a new warehouse if a new warehouseId is provided.
    * Also checks if the product is moved to a warehouse that accepts hazardous/non-hazardous products,
    * checks if the warehouse has enough space for the product, updates the new/old warehouse stock capacity.
-   * @param updateProductInput
-   * @returns
    */
-  public async updateProduct(id, updateProductInput) {
+  public async updateProduct(id, updateProductInput): Promise<ProductEntity> {
     const { warehouseId, productSize, name } = updateProductInput;
     try {
       const currentProduct: ProductEntity = await this.findProductById(id);
@@ -125,9 +125,10 @@ export class ProductService {
         });
 
         // Update the stock capacity for the old warehouse (remove product size from current capacity)
-        const oldWarehouse = await this.warehouseService.findWarehouseById(
-          currentProduct.warehouseId,
-        );
+        const oldWarehouse: WarehouseEntity =
+          await this.warehouseService.findWarehouseById(
+            currentProduct.warehouseId,
+          );
 
         const oldWarehouseUpdatedCurrentCapacity =
           oldWarehouse.stockCurrentCapacity -
@@ -147,9 +148,10 @@ export class ProductService {
       } else {
         // If stock is not moved to a new warehouse, just update the stock capacity for the current warehouse.
         // Remove product size from current capacity
-        const warehouse = await this.warehouseService.findWarehouseById(
-          currentProduct.warehouseId,
-        );
+        const warehouse: WarehouseEntity =
+          await this.warehouseService.findWarehouseById(
+            currentProduct.warehouseId,
+          );
 
         // Check if the updated product capacity will fit in the warehouse
         if (productSize > warehouse.stockMaxCapacity) {
@@ -200,16 +202,18 @@ export class ProductService {
     }
   }
 
-  public async findAllProducts() {
-    const allProducts = await this.productRepository.find();
+  public async findAllProducts(): Promise<ProductEntity[]> {
+    const allProducts: ProductEntity[] = await this.productRepository.find();
     if (allProducts.length === 0) {
       throw new ConflictException('No products found');
     }
     return allProducts;
   }
 
-  public async deleteProduct(id: string) {
-    const product = await this.productRepository.findOneBy({ id });
+  public async deleteProduct(id: string): Promise<string> {
+    const product: ProductEntity = await this.productRepository.findOneBy({
+      id,
+    });
     if (!product) {
       throw new ConflictException('Cannot find product with the provided id');
     }
@@ -218,8 +222,9 @@ export class ProductService {
     const warehouse = await this.warehouseService.findWarehouseById(
       product.warehouseId,
     );
-    const newWarehouseCurrentCapacity =
+    const newWarehouseCurrentCapacity: number =
       warehouse.stockCurrentCapacity - product.productSize;
+
     await this.warehouseRepository.update(warehouse.id, {
       stockCurrentCapacity: newWarehouseCurrentCapacity,
     });
@@ -228,8 +233,10 @@ export class ProductService {
     return `Product ${product.name} deleted successfully`;
   }
 
-  public async findProductById(id: string) {
-    const product = await this.productRepository.findOneBy({ id });
+  public async findProductById(id: string): Promise<ProductEntity> {
+    const product: ProductEntity = await this.productRepository.findOneBy({
+      id,
+    });
     if (!product) {
       throw new ConflictException('Cannot find product with the provided id');
     }
