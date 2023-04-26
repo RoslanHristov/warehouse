@@ -1,6 +1,6 @@
 # DEV NOTES
 - No calculations are done on the REST API side (overengineered the solution from the start where all logic is done on the graph side) :) 
-- The REST API is only used to show that the concept of connection the grap to outside data sources works
+- The REST API is only used to show that the concept of connection the graph to outside data sources works
 - First time using GraphQL and Apollo server.
 # Running the application with docker compose
 
@@ -9,7 +9,7 @@
 this will start the application and the database
 - After that you can access the application at http://localhost:3000/graphql
 
-# Running the application without docker compose
+# Running the application locally (without docker)
 
 - Make sure you have nodejs and npm installed
 - Run `npm install` in each directory (warehouse-management, warehouse-management-client)
